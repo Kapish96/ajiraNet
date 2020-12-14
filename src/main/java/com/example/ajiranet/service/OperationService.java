@@ -2,6 +2,8 @@ package com.example.ajiranet.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -139,12 +141,71 @@ public class OperationService {
 	}
 
 	public String fetchRoute(String from, String to) {
+		
+		validateFetchRouteRequest(from, to);
+		
+		Map<String, List<String>> connectionMap = createConnectionMap();
 
-		return null;
+		List<String> path = new ArrayList<>();
+		find(from, to, path, connectionMap);
+		String route = "No route find";
+		if (!path.isEmpty()) {
+			route = "Route is ";
+			for (int i = 0; i < path.size() - 1; i++) {
+				route += path.get(i) + "->";
+			}
+			route += path.get(path.size() - 1);
+		}
+		return route;
+	}
+
+	private void validateFetchRouteRequest(String from, String to) {
+
+		if (from == null || to == null)
+			throw new RuntimeException("Invalid Reqest");
+
+		Map<String, String> deviceNameAndTypeMap = createDeviceNameAndTypeMap();
+
+		if (!deviceNameAndTypeMap.containsKey(from))
+			throw new RuntimeException(String.format("Node '%s' not found", from));
+
+		if (!deviceNameAndTypeMap.containsKey(to))
+			throw new RuntimeException(String.format("Node '%s' not found", to));
+
+		if (deviceNameAndTypeMap.get(from).equals("REPEATER") || deviceNameAndTypeMap.get(to).equals("REPEATER"))
+			throw new RuntimeException("Route cannot be calculated with repeater");
+
+	}
+
+	private Map<String, String> createDeviceNameAndTypeMap() {
+		return devicesList.stream().collect(Collectors.toMap(Device::getName, Device::getType));
+	}
+
+	private Map<String, List<String>> createConnectionMap() {
+		return devicesList.stream().collect(Collectors.toMap(Device::getName, Device::getConnections));
+	}
+
+	boolean find(String source, String destination, List<String> path, Map<String, List<String>> connectionMap) {
+		if (!connectionMap.containsKey(source))
+			return false;
+		path.add(source);
+		if (connectionMap.get(source).contains(destination)) {
+			path.add(destination);
+			return true;
+		}
+
+		List<String> connections = connectionMap.get(source);
+		for (String ele : connections) {
+			if (find(ele, destination, path, connectionMap))
+				return true;
+		}
+		path.remove(source);
+
+		return false;
 	}
 
 	public List<DeviceVO> fetchDevices() {
-		
+
 		List<DeviceVO> deviceVOList = new ArrayList<>();
 
 		for (Device device : devicesList) {

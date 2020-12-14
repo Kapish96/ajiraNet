@@ -3,33 +3,36 @@ package com.example.ajiranet.web;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.RequestDispatcher;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.ajiranet.model.DeviceVO;
 import com.example.ajiranet.model.Request;
 import com.example.ajiranet.service.OperationService;
 
-@RestController("/test")
+@Controller
 public class NetworkOperationController {
 
 	@Autowired
 	private OperationService operationService;
 
 	@PostMapping(value = "/ajiranet/process")
-	public String executeOperation(@RequestBody Request request, @RequestHeader Map<String, String> headers,
-			RedirectAttributes redirectAttrs) {
+	public void executeOperation(@RequestBody Request request, @RequestHeader Map<String, String> headers, HttpServletRequest servletRequest,
+			HttpServletResponse response) {
 
-		redirectAttrs.getFlashAttributes();
 		try {
+			System.err.println("called controller");
 
 			String message = null;
 
@@ -37,9 +40,13 @@ public class NetworkOperationController {
 			if (headers.containsKey("create")) {
 				if (headers.get("create").equals("/devices")) { // add devices
 
+					System.err.println("create found");
 //					operationService.validate(request.getName(), request.getType(), 5l);
 //					message = "Successfully added";
-					return "forward:" + headers.get("create");
+//					return "redirect:/devicesss" ;
+//					 RequestDispatcher rd = request.;
+//				     rd.forward(request, response);
+					response.sendRedirect(headers.get("create"));
 				}
 
 				else { // add connection
@@ -56,11 +63,11 @@ public class NetworkOperationController {
 				operationService.validateModifyRequest(ar[2], request.getValue());
 				message = "Successfully defined strength";
 			}
-			return null;
+//			return null;
 //			return new ResponseEntity(message, HttpStatus.OK);
 
 		} catch (Exception e) {
-			return e.getMessage();
+//			return e.getMessage();
 //			return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -109,7 +116,8 @@ public class NetworkOperationController {
 			@RequestParam(name = "to") String to) {
 
 		try {
-			return new ResponseEntity("Successfully added", HttpStatus.OK);
+			String route = operationService.fetchRoute(from, to);
+			return new ResponseEntity(route, HttpStatus.OK);
 
 		} catch (Exception e) {
 			return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -121,5 +129,20 @@ public class NetworkOperationController {
 
 		return operationService.fetchDevices();
 	}
+	
+	public static void main(String[] args){ 
+		try {
+            args[0] = "0";
+            return;
+
+        } catch (Exception e) {
+        	e.printStackTrace();
+            System.out.print("Exception");
+        } finally {
+            System.out.print("Final");
+        }
+        
+    } 
+
 
 }
