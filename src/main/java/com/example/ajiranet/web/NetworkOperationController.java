@@ -129,20 +129,6 @@ public class NetworkOperationController {
 
 		return operationService.fetchDevices();
 	}
-	
-	public static void main(String[] args){ 
-		try {
-            args[0] = "0";
-            return;
-
-        } catch (Exception e) {
-        	e.printStackTrace();
-            System.out.print("Exception");
-        } finally {
-            System.out.print("Final");
-        }
-        
-    } 
 
 
 }
