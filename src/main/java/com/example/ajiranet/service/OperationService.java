@@ -1,6 +1,7 @@
 package com.example.ajiranet.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,26 +12,27 @@ import org.springframework.stereotype.Service;
 
 import com.example.ajiranet.model.Device;
 import com.example.ajiranet.model.DeviceVO;
+import com.example.ajiranet.model.Request;
 
 @Service
 public class OperationService {
 
 	private List<Device> devicesList = new ArrayList<>();
 
-	public void validate(String name, String type, Long strength) {
-
-		if (name == null && type == null) {
+	public void validate(Request request) {
+		
+		if (request==null  || request.getName() == null || request.getType() == null) {
 			throw new RuntimeException("Invalid command syntax");
 		}
 
-		if (isDeviceExist(name)) {
-			throw new RuntimeException("Device already exist");
+		if (isDeviceExist(request.getName())) {
+			throw new RuntimeException(String.format("Device '%s' already exist", request.getName()));
 		}
 
-		if (!"COMPUTER".equals(type) && !"REPEATER".equals(type)) {
-			throw new RuntimeException("type is not supported");
+		if (!"COMPUTER".equals(request.getType()) && !"REPEATER".equals(request.getType())) {
+			throw new RuntimeException(String.format("Type '%s'is not supported", request.getType()));
 		}
-		addDevice(name, type, strength);
+		addDevice(request.getName(), request.getType(), 5L);
 	}
 
 	@Cacheable(cacheNames = "device", key = "#name")
@@ -48,7 +50,6 @@ public class OperationService {
 		device.setType(type);
 		device.setStrength(strength);
 		devicesList.add(device);
-		System.err.println(devicesList.toString());
 		return null;
 	}
 
@@ -67,19 +68,19 @@ public class OperationService {
 		return null;
 	}
 
-	public void validateDeviceConnectionRequest(String source, List<String> targets) {
+	public void validateDeviceConnectionRequest(Request request) {
 
-		if (targets == null || source == null) {
+		if (request==null || request.getTargets() == null || request.getSource() == null) {
 			throw new RuntimeException("Invalid command syntax");
 		}
 
-		if (targets.contains(source)) {
+		if (request.getTargets().contains(request.getSource())) {
 			throw new RuntimeException("Cannot connect device to itself");
 		}
 
-		checkConnectionAndNode(source, targets);
+		checkConnectionAndNode(request.getSource(), request.getTargets());
 
-		addDeviceConncection(source, targets);
+		addDeviceConncection(request.getSource(), request.getTargets());
 	}
 
 	private void checkConnectionAndNode(String source, List<String> targets) {
@@ -91,7 +92,7 @@ public class OperationService {
 				found = true;
 				for (int i = 0; i < targets.size(); i++) {
 
-					if (device.getConnections().contains(targets.get(i))) {
+					if (device.getConnections()!=null && device.getConnections().contains(targets.get(i))) {
 						throw new RuntimeException("Devices are already connected");
 					}
 				}
@@ -115,13 +116,11 @@ public class OperationService {
 			throw new RuntimeException("Value should be an integer");
 		}
 
-		modifyStrength(name, value);
+		modifyStrength(name, strength);
 	}
 
 	@CachePut(cacheNames = "device")
-	public Device modifyStrength(String name, String value) {
-
-		Long strength = null;
+	public Device modifyStrength(String name, Long strength) {
 
 		for (Device device : devicesList) {
 			if (device.getName().equalsIgnoreCase(name)) {
@@ -149,6 +148,7 @@ public class OperationService {
 		List<String> path = new ArrayList<>();
 		find(from, to, path, connectionMap);
 		String route = "No route find";
+		
 		if (!path.isEmpty()) {
 			route = "Route is ";
 			for (int i = 0; i < path.size() - 1; i++) {
@@ -182,12 +182,22 @@ public class OperationService {
 	}
 
 	private Map<String, List<String>> createConnectionMap() {
-		return devicesList.stream().collect(Collectors.toMap(Device::getName, Device::getConnections));
+		Map<String, List<String>> map =  new HashMap<>();
+		for (Device device : devicesList) {
+			map.put(device.getName(), device.getConnections());
+		}
+		return map;
 	}
 
 	boolean find(String source, String destination, List<String> path, Map<String, List<String>> connectionMap) {
-		if (!connectionMap.containsKey(source))
+		if (!connectionMap.containsKey(source)) {
 			return false;
+		}
+			
+		else if(connectionMap.containsKey(source) && connectionMap.get(source)==null) {
+			return false;
+		}
+			
 		path.add(source);
 		if (connectionMap.get(source).contains(destination)) {
 			path.add(destination);
