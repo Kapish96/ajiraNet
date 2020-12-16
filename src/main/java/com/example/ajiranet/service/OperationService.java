@@ -39,8 +39,8 @@ public class OperationService {
 	public Device addDevice(String name, String type, Long strength) {
 
 		try {
-			System.out.println("Going to sleep for 5 Secs.. to simulate backend call.");
-			Thread.sleep(1000 * 2);
+			System.out.println("Going to sleep for 1 Secs.. to simulate backend call.");
+			Thread.sleep(1000 * 1);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -58,13 +58,22 @@ public class OperationService {
 
 		for (Device device : devicesList) {
 			if (device.getName().equalsIgnoreCase(source)) {
-				List<String> connections = new ArrayList<>();
-				for (int i = 0; i < targets.size(); i++) {
-					connections.add(targets.get(i));
+				
+				if(device.getConnections()==null)
+				device.setConnections(targets);
+				else {
+					List<String> connections = device.getConnections();
+					connections.addAll(targets);
+					device.setConnections(connections);
 				}
+			}
+			else if(targets.contains(device.getName())) {
+				List<String> connections = new ArrayList<>();
+				connections.add(source);
 				device.setConnections(connections);
 			}
 		}
+		
 		return null;
 	}
 
@@ -143,6 +152,10 @@ public class OperationService {
 		
 		validateFetchRouteRequest(from, to);
 		
+		if(from.equals(to)) {
+			return "Route is "+from+"->"+to;
+		}
+		
 		Map<String, List<String>> connectionMap = createConnectionMap();
 
 		List<String> path = new ArrayList<>();
@@ -161,8 +174,8 @@ public class OperationService {
 
 	private void validateFetchRouteRequest(String from, String to) {
 
-		if (from == null || to == null)
-			throw new RuntimeException("Invalid Reqest");
+		if (from == null || to == null || from.equals("") || to.equals(""))
+			throw new RuntimeException("Invalid Request");
 
 		Map<String, String> deviceNameAndTypeMap = createDeviceNameAndTypeMap();
 

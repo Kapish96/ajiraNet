@@ -2,6 +2,7 @@ package com.example.ajiranet.web;
 
 import java.util.List;
 
+import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,8 +106,8 @@ public class NetworkOperationController {
 
 	@PostMapping(value = "/info-routes")
 	@ResponseBody
-	public ResponseEntity<String> fetchRoute(@RequestParam(name = "from") String from,
-			@RequestParam(name = "to") String to) {
+	public ResponseEntity<String> fetchRoute(@RequestParam(name = "from", defaultValue="",required=false) String from,
+			@RequestParam(name = "to",defaultValue="",required=false) String to) {
 
 		try {
 			String route = operationService.fetchRoute(from, to);
