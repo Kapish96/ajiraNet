@@ -20,8 +20,8 @@ public class OperationService {
 	private List<Device> devicesList = new ArrayList<>();
 
 	public void validate(Request request) {
-		
-		if (request==null  || request.getName() == null || request.getType() == null) {
+
+		if (request == null || request.getName() == null || request.getType() == null) {
 			throw new RuntimeException("Invalid command syntax");
 		}
 
@@ -58,28 +58,27 @@ public class OperationService {
 
 		for (Device device : devicesList) {
 			if (device.getName().equalsIgnoreCase(source)) {
-				
-				if(device.getConnections()==null)
-				device.setConnections(targets);
+
+				if (device.getConnections() == null)
+					device.setConnections(targets);
 				else {
 					List<String> connections = device.getConnections();
 					connections.addAll(targets);
 					device.setConnections(connections);
 				}
-			}
-			else if(targets.contains(device.getName())) {
+			} else if (targets.contains(device.getName())) {
 				List<String> connections = new ArrayList<>();
 				connections.add(source);
 				device.setConnections(connections);
 			}
 		}
-		
+
 		return null;
 	}
 
 	public void validateDeviceConnectionRequest(Request request) {
 
-		if (request==null || request.getTargets() == null || request.getSource() == null) {
+		if (request == null || request.getTargets() == null || request.getSource() == null) {
 			throw new RuntimeException("Invalid command syntax");
 		}
 
@@ -101,7 +100,7 @@ public class OperationService {
 				found = true;
 				for (int i = 0; i < targets.size(); i++) {
 
-					if (device.getConnections()!=null && device.getConnections().contains(targets.get(i))) {
+					if (device.getConnections() != null && device.getConnections().contains(targets.get(i))) {
 						throw new RuntimeException("Devices are already connected");
 					}
 				}
@@ -149,19 +148,19 @@ public class OperationService {
 	}
 
 	public String fetchRoute(String from, String to) {
-		
+
 		validateFetchRouteRequest(from, to);
-		
-		if(from.equals(to)) {
-			return "Route is "+from+"->"+to;
+
+		if (from.equals(to)) {
+			return "Route is " + from + "->" + to;
 		}
-		
+
 		Map<String, List<String>> connectionMap = createConnectionMap();
 
 		List<String> path = new ArrayList<>();
 		find(from, to, path, connectionMap);
 		String route = "No route find";
-		
+
 		if (!path.isEmpty()) {
 			route = "Route is ";
 			for (int i = 0; i < path.size() - 1; i++) {
@@ -195,7 +194,7 @@ public class OperationService {
 	}
 
 	private Map<String, List<String>> createConnectionMap() {
-		Map<String, List<String>> map =  new HashMap<>();
+		Map<String, List<String>> map = new HashMap<>();
 		for (Device device : devicesList) {
 			map.put(device.getName(), device.getConnections());
 		}
@@ -206,11 +205,11 @@ public class OperationService {
 		if (!connectionMap.containsKey(source)) {
 			return false;
 		}
-			
-		else if(connectionMap.containsKey(source) && connectionMap.get(source)==null) {
+
+		else if (connectionMap.containsKey(source) && connectionMap.get(source) == null) {
 			return false;
 		}
-			
+
 		path.add(source);
 		if (connectionMap.get(source).contains(destination)) {
 			path.add(destination);

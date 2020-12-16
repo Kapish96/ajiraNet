@@ -2,7 +2,6 @@ package com.example.ajiranet.web;
 
 import java.util.List;
 
-import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +44,9 @@ public class NetworkOperationController {
 				request.setAttribute("body", requestBody);
 			}
 
-			if(command[0].equalsIgnoreCase("FETCH") && command[1].equalsIgnoreCase("/devices"))
-				command[1] = "/fetch"+command[1];
-			
+			if (command[0].equalsIgnoreCase("FETCH") && command[1].equalsIgnoreCase("/devices"))
+				command[1] = "/fetch" + command[1];
+
 			return "forward:" + command[1];
 
 		} catch (Exception e) {
@@ -56,12 +55,12 @@ public class NetworkOperationController {
 		}
 	}
 
-	@PostMapping(value = "/devices", consumes = MediaType.TEXT_PLAIN_VALUE)
+	@PostMapping(value = "/devices")
 	@ResponseBody
 	public ResponseEntity<String> addDevice(HttpServletRequest servletRequest) {
 
 		try {
-			
+
 			Request request = (Request) servletRequest.getAttribute("body");
 
 			operationService.validate(request);
@@ -78,7 +77,6 @@ public class NetworkOperationController {
 
 		try {
 			Request request = (Request) servletRequest.getAttribute("body");
-//			System.err.println("request object "+request);
 			operationService.validateDeviceConnectionRequest(request);
 			return new ResponseEntity("Successfully Connected", HttpStatus.OK);
 
@@ -106,8 +104,9 @@ public class NetworkOperationController {
 
 	@PostMapping(value = "/info-routes")
 	@ResponseBody
-	public ResponseEntity<String> fetchRoute(@RequestParam(name = "from", defaultValue="",required=false) String from,
-			@RequestParam(name = "to",defaultValue="",required=false) String to) {
+	public ResponseEntity<String> fetchRoute(
+			@RequestParam(name = "from", defaultValue = "", required = false) String from,
+			@RequestParam(name = "to", defaultValue = "", required = false) String to) {
 
 		try {
 			String route = operationService.fetchRoute(from, to);
